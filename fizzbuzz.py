@@ -14,4 +14,6 @@ def fizzbuzz(n=None):
 
 
 if __name__ == "__main__":
-    fizzbuzz()
+    s = input("Input N: ")
+    n = int(s)
+    fizzbuzz(n)
