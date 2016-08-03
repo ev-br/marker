@@ -105,6 +105,25 @@ class Submission(object):
 
 
 class Excercise(object):
+    """An Excercise, a list of tasks with their weights.
+
+    Each task is defined by an input and a weighting. `self.inputs` is a list
+    of inputs for each task. `self.weights` gives weighting of each task, plus
+    a possible mark allocation for the program to compile, out of 100 in total.
+    That is, ``len(self.weights) == len(self.inputs) + 1``, with ``weights[0]``
+    being the mark allocation for compilation. Total weight is 100.
+
+    To construct an excercise, construct an instance of `Excercise` with
+    either a `base_program` (which can be either a path to a file or a Program
+    instance), or a callable.
+
+    By default, the output is checked by literal comparison of the output with
+    the ground truth. If this is not desired, subclass Excercise and redefine
+    the `_check` method.
+
+    To mark an excercise use the `mark` method which returns the numeric mark.
+
+    """
     def __init__(self, base_program, logger, timeout=60,
                  weights=None, inputs=None, *args, **kwds):
         super(Excercise, self).__init__(*args, **kwds)
@@ -179,6 +198,10 @@ class Excercise(object):
                             mark, sum(self.weights)))
         logger.info("Done marking: %s out of %s" % (mark, sum(self.weights)))
         return mark
+
+    def grade(self, *args, **kwds):
+        """An alias for `mark`."""
+        return self.mark(*args, **kwds)
 
 
 if __name__ == "__main__":
