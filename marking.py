@@ -73,6 +73,20 @@ class Program(object):
         return output, err
 
 
+class FakeProgram(object):
+    """Wrap a callable `func` into a Program-compatible interface."""
+    def __init__(self, func, timeout):
+        self.func = func
+        self.timeout = timeout
+
+    def compile(self, logger):
+        return True
+
+    def run(self, logger, inp=None):
+        logger.info("calling %s < %s" % (self.func, inp))
+        return self.func(inp), None
+
+
 class Submission(object):
     """A student's submission. Given a folder, find an executable file.
 
@@ -115,7 +129,7 @@ class Excercise(object):
 
     To construct an excercise, construct an instance of `Excercise` with
     either a `base_program` (which can be either a path to a file or a Program
-    instance), or a callable.
+    instance), or a callable with the signature ``func(input)``.
 
     By default, the output is checked by literal comparison of the output with
     the ground truth. If this is not desired, subclass Excercise and redefine
@@ -128,7 +142,10 @@ class Excercise(object):
                  weights=None, inputs=None, *args, **kwds):
         super(Excercise, self).__init__(*args, **kwds)
 
-        if isinstance(base_program, Program):
+        if callable(base_program):
+            self.base_program = FakeProgram(base_program, timeout)
+            self.timeout = timeout 
+        elif isinstance(base_program, Program):
             self.base_program = base_program
             self.timeout = base_program.timeout
         else:
@@ -140,6 +157,9 @@ class Excercise(object):
         if not s:
             raise ValueError("%s compile error" % self.base_program)
 
+        self._set_up_weights(inputs, weights, logger)
+
+    def _set_up_weights(self, inputs, weights, logger):
         if inputs is None:
             inputs = [""]
         if weights is None:
@@ -157,7 +177,7 @@ class Excercise(object):
         of checking correctness (e.g. np.allclose, etc).
 
         """
-        return 1 if outp == base_outp else 0
+        return 1 if outp.splitlines() == base_outp.splitlines() else 0
 
     def mark(self, folder, logger, timeout=None):
         if timeout is None:
@@ -182,6 +202,7 @@ class Excercise(object):
                     
             for inp, weight in zip(self.inputs, self.weights[1:]):
                 logger.info("Checking input = %s" % inp)
+
                 outp, err = program.run(logger, inp)
                 base_outp, base_err = self.base_program.run(logger, inp)
 
@@ -209,9 +230,13 @@ if __name__ == "__main__":
     setup_logger('root', log_file='root_log.log')
     root_logger = logging.getLogger('root')
 
-    # Mark a single excercise
-    fname = "fizzbuzz.py"
-    exc = Excercise(fname, logger=root_logger, inputs=[21, ""])
+    #### Mark a single excercise:
+#    # use a base_program
+#    fname = "fizzbuzz.py"
+#    exc = Excercise(fname, logger=root_logger, inputs=[21, ""])
+    # or use a callable instead
+    from fizzbuzz import fizzbuzz_check
+    exc = Excercise(fizzbuzz_check, logger=root_logger, inputs=[21, 11])
 
     # mark a single student: here's the submission folder
     folder = "FB"
