@@ -192,7 +192,6 @@ class Exercise(object):
             mark = 0
 
             # compile
-            logger.info("Compiling the submission...")
             success = program.compile(logger)
             if success:
                 mark = self.weights[0]
@@ -259,7 +258,12 @@ if __name__ == "__main__":
         setup_logger(logger_name=path, log_file=os.path.join(path, 'log.log'))
         this_logger = logging.getLogger(path)
 
-        mark = ex.mark(path, this_logger)
+        root_logger.info("Marking.. %s." % path)
+        try:
+            mark = ex.mark(path, this_logger)
+        except Exception as e:
+            root_logger.error("Unknown exception %s." % e)
+        root_logger.info("Done, mark = %s." % mark)
 
     else:
         # root folder is path
