@@ -17,6 +17,14 @@ def use_folder(folder):
     os.chdir(start_folder)
 
 
+def name_from_path(path):
+    # XXX: check on Windows?
+    if path.endswith('/'):
+        path = path[:-1]
+    head, tail = os.path.split(path)
+    return tail.replace(' ', '_')
+
+
 def setup_logger(logger_name, log_file, level=logging.INFO):
     # http://stackoverflow.com/questions/17035077/python-logging-to-multiple-log-files-from-different-classes
     l = logging.getLogger(logger_name)
@@ -29,6 +37,7 @@ def setup_logger(logger_name, log_file, level=logging.INFO):
     l.setLevel(level)
     l.addHandler(fileHandler)
     l.addHandler(streamHandler)
+    return l
 
 
 class Program(object):
@@ -245,8 +254,8 @@ if __name__ == "__main__":
         root_dir = os.getcwd()
 
     # set up the root logger
-    setup_logger('root', log_file=os.path.join(root_dir, 'root_log.log'))
-    root_logger = logging.getLogger('root')
+    root_logger = setup_logger('root',
+                               log_file=os.path.join(root_dir, 'root_log.log'))
 
     # XXX: select the correct exercise
     from fizzbuzz import fizzbuzz_check
@@ -255,8 +264,9 @@ if __name__ == "__main__":
     if args.only:
         # set up the per-student logger
         path = args.path
-        setup_logger(logger_name=path, log_file=os.path.join(path, 'log.log'))
-        this_logger = logging.getLogger(path)
+        name = name_from_path(path)
+        this_logger = setup_logger(logger_name=name,
+                                   log_file=os.path.join(path, name + '.log'))
 
         root_logger.info("Marking.. %s." % path)
         try:
@@ -277,9 +287,9 @@ if __name__ == "__main__":
         root_path, dirs, fnames = next(os.walk(root_dir))
         for folder in dirs:
             ppath = os.path.join(root_path, folder)
-            setup_logger(logger_name=folder,
-                         log_file=os.path.join(ppath, 'log.log'))
-            this_logger = logging.getLogger(folder)
+            name = name_from_path(ppath)
+            this_logger = setup_logger(logger_name=name,
+                                       log_file=os.path.join(ppath, name + '.log'))
 
             root_logger.info("Marking.. %s." % ppath)
             try:
@@ -288,25 +298,3 @@ if __name__ == "__main__":
                 root_logger.error("Unknown exception %s." % e)
             root_logger.info("Done, mark = %s." % mark)
 
-
-    exit(-1)
-
-
-    #### Mark a single Exercise:
-#    # use a base_program
-#    fname = "fizzbuzz.py"
-#    exc = Exercise(fname, logger=root_logger, inputs=[21, ""])
-    # or use a callable instead
-    from fizzbuzz import fizzbuzz_check
-    exc = Exercise(fizzbuzz_check, logger=root_logger, inputs=[21, 11])
-
-    # mark a single student: here's the submission folder
-    folder = "FB"
-
-    # set up the per-student logger
-    setup_logger(logger_name=folder, log_file=os.path.join(folder, 'log.log'))
-    this_logger = logging.getLogger(folder)
-
-    # mark
-    mark = exc.mark('FB', this_logger)
-    print("mark = ", mark)
