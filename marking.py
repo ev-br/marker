@@ -118,8 +118,8 @@ class Submission(object):
         return f.endswith('.py')
 
 
-class Excercise(object):
-    """An Excercise, a list of tasks with their weights.
+class Exercise(object):
+    """An Exercise, a list of tasks with their weights.
 
     Each task is defined by an input and a weighting. `self.inputs` is a list
     of inputs for each task. `self.weights` gives weighting of each task, plus
@@ -127,20 +127,20 @@ class Excercise(object):
     That is, ``len(self.weights) == len(self.inputs) + 1``, with ``weights[0]``
     being the mark allocation for compilation. Total weight is 100.
 
-    To construct an excercise, construct an instance of `Excercise` with
+    To construct an Exercise, construct an instance of `Exercise` with
     either a `base_program` (which can be either a path to a file or a Program
     instance), or a callable with the signature ``func(input)``.
 
     By default, the output is checked by literal comparison of the output with
-    the ground truth. If this is not desired, subclass Excercise and redefine
+    the ground truth. If this is not desired, subclass Exercise and redefine
     the `_check` method.
 
-    To mark an excercise use the `mark` method which returns the numeric mark.
+    To mark an Exercise use the `mark` method which returns the numeric mark.
 
     """
     def __init__(self, base_program, logger, timeout=60,
                  weights=None, inputs=None, *args, **kwds):
-        super(Excercise, self).__init__(*args, **kwds)
+        super(Exercise, self).__init__(*args, **kwds)
 
         if callable(base_program):
             self.base_program = FakeProgram(base_program, timeout)
@@ -168,7 +168,7 @@ class Excercise(object):
             raise ValueError("Weights %s and inputs %s are inconsistent" %
                              (weights, inputs))
         self.weights, self.inputs = weights, inputs
-        logger.info('Done setting up the Excercise.')
+        logger.info('Done setting up the Exercise.')
 
     def _check(self, inp, outp, base_outp):
         """ Compare the outputs given input. 
@@ -230,13 +230,13 @@ if __name__ == "__main__":
     setup_logger('root', log_file='root_log.log')
     root_logger = logging.getLogger('root')
 
-    #### Mark a single excercise:
+    #### Mark a single Exercise:
 #    # use a base_program
 #    fname = "fizzbuzz.py"
-#    exc = Excercise(fname, logger=root_logger, inputs=[21, ""])
+#    exc = Exercise(fname, logger=root_logger, inputs=[21, ""])
     # or use a callable instead
     from fizzbuzz import fizzbuzz_check
-    exc = Excercise(fizzbuzz_check, logger=root_logger, inputs=[21, 11])
+    exc = Exercise(fizzbuzz_check, logger=root_logger, inputs=[21, 11])
 
     # mark a single student: here's the submission folder
     folder = "FB"
