@@ -3,6 +3,7 @@ from __future__ import division, print_function, absolute_import
 from subprocess import Popen, PIPE, STDOUT, TimeoutExpired
 import logging
 import datetime
+import sys
 import os
 import contextlib
 import argparse
@@ -48,7 +49,7 @@ class Program(object):
 
         with use_folder(self.workdir):
             try:
-                self.cmd = ["python", self.fname]
+                self.cmd = [sys.executable, self.fname]
                 success = True
                 logger.info("compilation success!")
             except:
