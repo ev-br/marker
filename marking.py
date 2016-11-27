@@ -7,6 +7,7 @@ import sys
 import os
 import contextlib
 import argparse
+import py_compile
 
 @contextlib.contextmanager
 def use_folder(folder):
@@ -56,9 +57,12 @@ class Program(object):
         # XXX: refactor the python-specific part to _compile.
         logger.info("Compiling %s ..." % self.fname)
 
+        self.cmd = [sys.executable, self.fname]
         with use_folder(self.workdir):
             try:
-                self.cmd = [sys.executable, self.fname]
+                # Check if the file is a valid python code.
+                py_compile.compile(os.path.join(self.workdir, self.fname),
+                                   doraise=True)
                 success = True
             except Exception as e:
                 logger.error("Compilation failed. Exception %s " % e)
