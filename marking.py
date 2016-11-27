@@ -60,16 +60,15 @@ class Program(object):
             try:
                 self.cmd = [sys.executable, self.fname]
                 success = True
-                logger.info("compilation success!")
-            except:
-                logger.error("compilation failed.")
+            except Exception as e:
+                logger.error("Compilation failed. Exception %s " % e)
                 success = False
         return success
 
     def run(self, logger, inp=None):
         """Run the program in a subprocess. Grab the output.
         """
-        logger.info("running %s < %s" % (os.path.join(self.workdir, self.fname), inp))
+        logger.info("running %s < %s" % (self.fname, inp))
         inp_ = str(inp) if inp is not None else ""
         with use_folder(self.workdir):
             try:
@@ -153,6 +152,8 @@ class Exercise(object):
                  weights=None, inputs=None, *args, **kwds):
         super(Exercise, self).__init__(*args, **kwds)
 
+        logger.info('Setting up exercise with base_program %s' % base_program)
+
         if callable(base_program):
             self.base_program = FakeProgram(base_program, timeout)
             self.timeout = timeout 
@@ -160,6 +161,7 @@ class Exercise(object):
             self.base_program = base_program
             self.timeout = base_program.timeout
         else:
+            raise NotImplementedError("what is it?")
             self.base_program = Program('.', base_program, logger, timeout)  ## FIXME: paths
             self.timeout = timeout
 
@@ -169,6 +171,7 @@ class Exercise(object):
             raise ValueError("%s compile error" % self.base_program)
 
         self._set_up_weights(inputs, weights, logger)
+        logger.info('Done setting up the exercise.')
 
     def _set_up_weights(self, inputs, weights, logger):
         if inputs is None:
@@ -176,10 +179,10 @@ class Exercise(object):
         if weights is None:
             weights = [20.0] + [80.0/len(inputs) for _ in inputs]
         if len(weights) != len(inputs) + 1:
-            raise ValueError("Weights %s and inputs %s are inconsistent" %
-                             (weights, inputs))
+            mesg = "Weights %s and inputs %s are inconsistent" % (weights, inputs)
+            logger.error(mesg)
+            raise ValueError(mesg)
         self.weights, self.inputs = weights, inputs
-        logger.info('Done setting up the Exercise.')
 
     def _check(self, inp, outp, base_outp):
         """ Compare the outputs given input. 
@@ -191,6 +194,8 @@ class Exercise(object):
         return 1 if outp.splitlines() == base_outp.splitlines() else 0
 
     def mark(self, folder, logger, timeout=None):
+        logger.info("*** Marking %s ***" % folder)
+
         if timeout is None:
             timeout = self.timeout
 
