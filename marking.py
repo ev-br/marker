@@ -5,6 +5,7 @@ import logging
 import datetime
 import os
 import contextlib
+import argparse
 
 @contextlib.contextmanager
 def use_folder(folder):
@@ -226,9 +227,47 @@ class Exercise(object):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("path",
+                        help="Path to exercise folder or a single exercise.")
+    parser.add_argument("--only", action="store_true",
+                        help="Only mark a single exercise at path.")
+    args = parser.parse_args()
 
-    setup_logger('root', log_file='root_log.log')
+    a_path = os.path.abspath(args.path)
+    if not os.path.exists(a_path):
+        raise ValueError("Path %s does not exist" % args.path)
+
+    # figure out the root folder:
+    #    if marking a single submission, root is os.getcwd()
+    root_dir = args.path
+    if args.only:
+        root_dir = os.getcwd()
+
+    # set up the root logger
+    setup_logger('root', log_file=os.path.join(root_dir, 'root_log.log'))
     root_logger = logging.getLogger('root')
+
+    # XXX: select the correct exercise
+    from fizzbuzz import fizzbuzz_check
+
+    if args.only:
+        ex = Exercise(fizzbuzz_check, logger=root_logger, inputs=[21, 11])
+
+        # set up the per-student logger
+        path = args.path
+        setup_logger(logger_name=path, log_file=os.path.join(path, 'log.log'))
+        this_logger = logging.getLogger(path)
+
+        mark = ex.mark(path, this_logger)
+
+    else:
+        # root folder is path
+        # walk: **Use the abspath, see os.walk docstring last line**
+        raise NotImplementedError
+
+    exit(-1)
+
 
     #### Mark a single Exercise:
 #    # use a base_program
