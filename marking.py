@@ -249,10 +249,9 @@ if __name__ == "__main__":
 
     # XXX: select the correct exercise
     from fizzbuzz import fizzbuzz_check
+    ex = Exercise(fizzbuzz_check, logger=root_logger, inputs=[21, 11])
 
     if args.only:
-        ex = Exercise(fizzbuzz_check, logger=root_logger, inputs=[21, 11])
-
         # set up the per-student logger
         path = args.path
         setup_logger(logger_name=path, log_file=os.path.join(path, 'log.log'))
@@ -266,9 +265,28 @@ if __name__ == "__main__":
         root_logger.info("Done, mark = %s." % mark)
 
     else:
+        # walk: **Use abspaths, see os.walk docstring's last line**
         # root folder is path
-        # walk: **Use the abspath, see os.walk docstring last line**
-        raise NotImplementedError
+        # The structure is 
+        # root_dir
+        #    - student_1
+        #    - student_2
+        #    - student_3
+        # where each student_# is a directory with an executable. 
+        root_path, dirs, fnames = next(os.walk(root_dir))
+        for folder in dirs:
+            ppath = os.path.join(root_path, folder)
+            setup_logger(logger_name=folder,
+                         log_file=os.path.join(ppath, 'log.log'))
+            this_logger = logging.getLogger(folder)
+
+            root_logger.info("Marking.. %s." % ppath)
+            try:
+                mark = ex.mark(ppath, this_logger)
+            except Exception as e:
+                root_logger.error("Unknown exception %s." % e)
+            root_logger.info("Done, mark = %s." % mark)
+
 
     exit(-1)
 
