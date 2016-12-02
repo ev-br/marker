@@ -244,6 +244,23 @@ class Exercise(object):
         return self.mark(*args, **kwds)
 
 
+def mark_one_path(mark_func, ppath, root_logger):
+
+    # first of all, set up the per-student logger
+    name = name_from_path(ppath)
+    this_logger = setup_logger(logger_name=name,
+                               log_file=os.path.join(ppath, name + '.log'))
+
+    root_logger.info("Marking.. %s." % ppath)
+    try:
+        mark = mark_func(ppath, this_logger)
+    except Exception as e:
+        root_logger.error("Unknown exception: %s." % e)
+        mark = 0
+    root_logger.info("Done, mark = %s." % mark)
+    return mark
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("path",
@@ -271,19 +288,7 @@ if __name__ == "__main__":
     ex = Exercise(fizzbuzz_check, logger=root_logger, inputs=[21, 11])
 
     if args.only:
-        # set up the per-student logger
-        path = args.path
-        name = name_from_path(path)
-        this_logger = setup_logger(logger_name=name,
-                                   log_file=os.path.join(path, name + '.log'))
-
-        root_logger.info("Marking.. %s." % path)
-        try:
-            mark = ex.mark(path, this_logger)
-        except Exception as e:
-            root_logger.error("Unknown exception %s." % e)
-        root_logger.info("Done, mark = %s." % mark)
-
+        mark_one_path(ex.mark, args.path, root_logger)
     else:
         # walk: **Use abspaths, see os.walk docstring's last line**
         # root folder is path
@@ -296,14 +301,4 @@ if __name__ == "__main__":
         root_path, dirs, fnames = next(os.walk(root_dir))
         for folder in dirs:
             ppath = os.path.join(root_path, folder)
-            name = name_from_path(ppath)
-            this_logger = setup_logger(logger_name=name,
-                                       log_file=os.path.join(ppath, name + '.log'))
-
-            root_logger.info("Marking.. %s." % ppath)
-            try:
-                mark = ex.mark(ppath, this_logger)
-            except Exception as e:
-                root_logger.error("Unknown exception %s." % e)
-            root_logger.info("Done, mark = %s." % mark)
-
+            mark_one_path(ex.mark, ppath, root_logger)
