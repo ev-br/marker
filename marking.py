@@ -284,8 +284,10 @@ if __name__ == "__main__":
                                log_file=os.path.join(root_dir, 'root_log.log'))
 
     # XXX: select the correct exercise
-    from fizzbuzz import fizzbuzz_check
-    ex = Exercise(fizzbuzz_check, logger=root_logger, inputs=[21, 11])
+    fizzbuzz_module = __import__('fizzbuzz')
+    checker_func = fizzbuzz_module.fizzbuzz_check
+
+    ex = Exercise(checker_func, logger=root_logger, inputs=[21, 11])
 
     if args.only:
         mark_one_path(ex.mark, args.path, root_logger)
