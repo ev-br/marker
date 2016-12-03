@@ -193,13 +193,13 @@ class Exercise(object):
         self.weights, self.inputs = weights, inputs
 
     def _check(self, inp, outp, base_outp, this_logger):
-        """Compare the outputs given input. 
+        """Compare the outputs given input, return the score out of 100.
 
         Subclass and override this method if you want a different way of
         of checking correctness (e.g. np.allclose, etc).
 
         """
-        return 1 if outp.splitlines() == base_outp.splitlines() else 0
+        return 100 if outp.splitlines() == base_outp.splitlines() else 0
 
     def _parse_output(self, inp, outp, this_logger):
         """Coerce outp into the format suitable for comparison with base_outp.
@@ -247,13 +247,15 @@ class Exercise(object):
                     logger.error("stderr is %s." % err)
                     continue
 
+                # check/compare outp and base_outp
                 outp = self._parse_output(inp, outp, logger)
                 if outp is not None:
                     result = self._check(inp, outp, base_outp, logger)
                 else:
                     # _parse_output failed.
                     result = 0
-                mark += result * weight
+
+                mark += result * weight / 100
                 logger.info("result is %s, mark is %s out of %s." % (result,
                             mark, sum(self.weights)))
         logger.info("Done marking: %s out of %s" % (mark, sum(self.weights)))
@@ -330,8 +332,9 @@ if __name__ == "__main__":
         def _check(self, inp, outp, base_outp, this_logger):
             import numpy as np
             size = min(len(base_outp), len(outp))
-            return sum(np.allclose(a, b) for a, b in zip(outp, base_outp)) / len(base_outp)
-            # XXX: make _check return a number out of 100 or a list (then subtasks, sum to 100)
+            summ = sum(np.allclose(a, b) for a, b in zip(outp, base_outp))
+            # TODO: more careful checks
+            return 100 * summ / len(base_outp)
 
     ex = Ex7(Problem7().solve, logger=root_logger)
 
