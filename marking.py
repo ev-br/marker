@@ -289,6 +289,9 @@ if __name__ == "__main__":
                         help="Path to exercise folder or a single exercise.")
     parser.add_argument("--only", action="store_true",
                         help="Only mark a single exercise at path.")
+    parser.add_argument("--checker", required=True,
+                        help="The checker factory (required). Given X, the "
+                              "factory is shims.get_X().")
     args = parser.parse_args()
 
     a_path = os.path.abspath(args.path)
@@ -305,39 +308,14 @@ if __name__ == "__main__":
     root_logger = setup_logger('root',
                                log_file=os.path.join(root_dir, 'root_log.log'))
 
-    # XXX: select the correct exercise
-    fizzbuzz_module = __import__('fizzbuzz')
-    fizzbuzz_func = fizzbuzz_module.fizzbuzz_check
-    ex = Exercise(fizzbuzz_func, logger=root_logger, inputs=[21, 11])
+    # select the exercise to mark
+    #   XXX: some more flexibility: for now shims.py is hardcoded;
+    #        a global registry of checkers? use --checker=module.factory CLI syntax? 
+    shims = __import__('shims')
+    factory = getattr(shims, 'get_'+args.checker)
+    ex = factory(logger=root_logger)
 
-    # XXX: epsilon
-    from lab_1 import Problem7
-    class Ex7(Exercise):
-        def __init__(self, *args, **kwds):
-            super(Ex7, self).__init__(*args, **kwds)
-
-        def _parse_output(self, inp, outp, this_logger):
-            # _check expects a list of floats. Extract these floats from `outp`
-            # (which comes from the student).
-            try:
-                split_outp = outp.replace(', ', ' ').split()
-                split_outp = [float(_) for _ in split_outp]
-            except Exception as e:
-                mesg = "Failed parsing the output: \n===\n %s\n===\n" % outp
-                mesg += "Exception: %s " % e
-                this_logger.error(mesg)
-                return None
-            return split_outp
-
-        def _check(self, inp, outp, base_outp, this_logger):
-            import numpy as np
-            size = min(len(base_outp), len(outp))
-            summ = sum(np.allclose(a, b) for a, b in zip(outp, base_outp))
-            # TODO: more careful checks
-            return 100 * summ / len(base_outp)
-
-    ex = Ex7(Problem7().solve, logger=root_logger)
-
+    # Mark it
     if args.only:
         mark_one_path(ex.mark, args.path, root_logger)
     else:
