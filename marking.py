@@ -156,7 +156,7 @@ class Exercise(object):
     To mark an Exercise use the `mark` method which returns the numeric mark.
 
     """
-    def __init__(self, base_program, logger, timeout=60,
+    def __init__(self, base_program, logger, timeout=None,
                  weights=None, inputs=None, *args, **kwds):
         super(Exercise, self).__init__(*args, **kwds)
 
