@@ -72,7 +72,7 @@ class Program(object):
     def run(self, logger, inp=None):
         """Run the program in a subprocess. Grab the output.
         """
-        logger.info("running %s < %s" % (self.fname, inp))
+        logger.info("running %s with input %s" % (self.fname, inp))
         inp_ = str(inp) if inp is not None else ""
         with use_folder(self.workdir):
             try:
@@ -244,7 +244,7 @@ class Exercise(object):
                     logger.error("base_stderr is %s " % base_err)
                     raise ValueError("base_err is %s for input %s " % (inp, base_err))
                 if err:
-                    logger.error("stderr is %s." % err)
+                    logger.error("stderr is \n===\n%s\n===\n" % err)
                     continue
 
                 # check/compare outp and base_outp
@@ -279,7 +279,7 @@ def mark_one_path(mark_func, ppath, root_logger):
     except Exception as e:
         root_logger.error("Unknown exception: %s." % e)
         mark = 0
-    root_logger.info("Done, mark = %s." % mark)
+    root_logger.info("Done %s; mark = %s." % (ppath, mark))
     return mark
 
 

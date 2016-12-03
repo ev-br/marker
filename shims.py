@@ -30,7 +30,7 @@ class Ex1_7(Exercise):
             split_outp = outp.replace(', ', ' ').split()
             split_outp = [float(_) for _ in split_outp]
         except Exception as e:
-            mesg = "Failed parsing the output: \n===\n %s\n===\n" % outp
+            mesg = "Failed to parse the output: \n===\n %s\n===\n" % outp
             mesg += "Exception: %s " % e
             this_logger.error(mesg)
             return None
