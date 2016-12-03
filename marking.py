@@ -60,7 +60,7 @@ class Program(object):
         self.cmd = [sys.executable, self.fname]
         with use_folder(self.workdir):
             try:
-                # Check if the file is a valid python code.
+                # Check if the file is valid python code.
                 py_compile.compile(os.path.join(self.workdir, self.fname),
                                    doraise=True)
                 success = True
@@ -207,8 +207,6 @@ class Exercise(object):
         if timeout is None:
             timeout = self.timeout
 
- #       import pdb; pdb.set_trace()
-
         submission = Submission(folder)
         program = Program(submission.folder, submission.fname, logger, timeout)
 
@@ -293,8 +291,6 @@ if __name__ == "__main__":
     fizzbuzz_module = __import__('fizzbuzz')
     fizzbuzz_func = fizzbuzz_module.fizzbuzz_check
     ex = Exercise(fizzbuzz_func, logger=root_logger, inputs=[21, 11])
-
-   # import pdb; pdb.set_trace()
 
     # XXX: epsilon
     from lab_1 import Problem7
