@@ -29,7 +29,7 @@ def name_from_path(path):
 def setup_logger(logger_name, log_file, level=logging.INFO):
     # http://stackoverflow.com/questions/17035077/python-logging-to-multiple-log-files-from-different-classes
     l = logging.getLogger(logger_name)
-    formatter = logging.Formatter('%(asctime)s : %(message)s')
+    formatter = logging.Formatter('%(levelname)s: %(asctime)s : %(message)s')
     fileHandler = logging.FileHandler(log_file, mode='w')
     fileHandler.setFormatter(formatter)
     streamHandler = logging.StreamHandler()
@@ -312,7 +312,7 @@ if __name__ == "__main__":
     from lab_1 import Problem7
     class Ex7(Exercise):
         def __init__(self, *args, **kwds):
-            super().__init__(*args, **kwds)
+            super(Ex7, self).__init__(*args, **kwds)
 
         def _parse_output(self, inp, outp, this_logger):
             # _check expects a list of floats. Extract these floats from `outp`
