@@ -193,13 +193,24 @@ class Exercise(object):
         self.weights, self.inputs = weights, inputs
 
     def _check(self, inp, outp, base_outp, this_logger):
-        """ Compare the outputs given input. 
+        """Compare the outputs given input. 
 
         Subclass and override this method if you want a different way of
         of checking correctness (e.g. np.allclose, etc).
 
         """
         return 1 if outp.splitlines() == base_outp.splitlines() else 0
+
+    def _parse_output(self, inp, outp, this_logger):
+        """Coerce outp into the format suitable for comparison with base_outp.
+
+        In case of failure returns None.
+
+        Use case: `base_outp` is a list of floats, and `outp` is a string
+        collected from stdout. Subclass and use this method to extract floats
+        from the string.
+        """
+        return outp
 
     def mark(self, folder, logger, timeout=None):
         logger.info("*** Marking %s ***" % folder)
@@ -236,7 +247,12 @@ class Exercise(object):
                     logger.error("stderr is %s." % err)
                     continue
 
-                result = self._check(inp, outp, base_outp, logger) 
+                outp = self._parse_output(inp, outp, logger)
+                if outp is not None:
+                    result = self._check(inp, outp, base_outp, logger)
+                else:
+                    # _parse_output failed.
+                    result = 0
                 mark += result * weight
                 logger.info("result is %s, mark is %s out of %s." % (result,
                             mark, sum(self.weights)))
@@ -297,18 +313,24 @@ if __name__ == "__main__":
     class Ex7(Exercise):
         def __init__(self, *args, **kwds):
             super().__init__(*args, **kwds)
-        def _check(self, inp, outp, base_outp, this_logger):
-            # XXX: parse output (can raise BTW)
-            split_outp = outp.replace(', ', ' ').split()
+
+        def _parse_output(self, inp, outp, this_logger):
+            # _check expects a list of floats. Extract these floats from `outp`
+            # (which comes from the student).
             try:
+                split_outp = outp.replace(', ', ' ').split()
                 split_outp = [float(_) for _ in split_outp]
             except Exception as e:
-                this_logger.error("Failed parsing the output: \n===\n %s\n===\n" % outp)
-                return 0
+                mesg = "Failed parsing the output: \n===\n %s\n===\n" % outp
+                mesg += "Exception: %s " % e
+                this_logger.error(mesg)
+                return None
+            return split_outp
 
+        def _check(self, inp, outp, base_outp, this_logger):
             import numpy as np
-            size = min(len(base_outp), len(split_outp))
-            return sum(np.allclose(a, b) for a, b in zip(split_outp, base_outp)) / len(base_outp)
+            size = min(len(base_outp), len(outp))
+            return sum(np.allclose(a, b) for a, b in zip(outp, base_outp)) / len(base_outp)
             # XXX: make _check return a number out of 100 or a list (then subtasks, sum to 100)
 
     ex = Ex7(Problem7().solve, logger=root_logger)
