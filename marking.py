@@ -48,7 +48,7 @@ class Program(object):
         self.workdir = os.path.abspath(folder)
         self.fname = fname
 
-        self.timeout = timeout if timeout else 60
+        self.timeout = timeout if timeout else 15
         self.cmd = None
 
     def compile(self, logger):
@@ -81,7 +81,7 @@ class Program(object):
                           universal_newlines=True)
                 output, err = p.communicate(input=inp_, timeout=self.timeout)
             except TimeoutExpired:
-                logger.error("Timeout!")
+                logger.error("Timed out %s seconds" % self.timeout)
                 p.kill()
                 output, err = "", None
         return output, err
@@ -97,8 +97,12 @@ class FakeProgram(object):
         return True
 
     def run(self, logger, inp=None):
-        logger.info("calling %s < %s" % (self.func, inp))
-        return self.func(inp), None
+        logger.info("calling %s with input %s" % (self.func, inp))
+        if inp is not None:
+            res = self.func(inp)
+        else:
+            res = self.func()
+        return res, None
 
 
 class Submission(object):
@@ -179,7 +183,7 @@ class Exercise(object):
 
     def _set_up_weights(self, inputs, weights, logger):
         if inputs is None:
-            inputs = [""]
+            inputs = [None]
         if weights is None:
             weights = [20.0] + [80.0/len(inputs) for _ in inputs]
         if len(weights) != len(inputs) + 1:
@@ -188,7 +192,7 @@ class Exercise(object):
             raise ValueError(mesg)
         self.weights, self.inputs = weights, inputs
 
-    def _check(self, inp, outp, base_outp):
+    def _check(self, inp, outp, base_outp, this_logger):
         """ Compare the outputs given input. 
 
         Subclass and override this method if you want a different way of
@@ -202,6 +206,8 @@ class Exercise(object):
 
         if timeout is None:
             timeout = self.timeout
+
+ #       import pdb; pdb.set_trace()
 
         submission = Submission(folder)
         program = Program(submission.folder, submission.fname, logger, timeout)
@@ -229,10 +235,10 @@ class Exercise(object):
                     logger.error("base_stderr is %s " % base_err)
                     raise ValueError("base_err is %s for input %s " % (inp, base_err))
                 if err:
-                    logging.error("stderr is %s." % err)
+                    logger.error("stderr is %s." % err)
                     continue
 
-                result = self._check(inp, outp, base_outp) 
+                result = self._check(inp, outp, base_outp, logger) 
                 mark += result * weight
                 logger.info("result is %s, mark is %s out of %s." % (result,
                             mark, sum(self.weights)))
@@ -285,9 +291,31 @@ if __name__ == "__main__":
 
     # XXX: select the correct exercise
     fizzbuzz_module = __import__('fizzbuzz')
-    checker_func = fizzbuzz_module.fizzbuzz_check
+    fizzbuzz_func = fizzbuzz_module.fizzbuzz_check
+    ex = Exercise(fizzbuzz_func, logger=root_logger, inputs=[21, 11])
 
-    ex = Exercise(checker_func, logger=root_logger, inputs=[21, 11])
+   # import pdb; pdb.set_trace()
+
+    # XXX: epsilon
+    from lab_1 import Problem7
+    class Ex7(Exercise):
+        def __init__(self, *args, **kwds):
+            super().__init__(*args, **kwds)
+        def _check(self, inp, outp, base_outp, this_logger):
+            # XXX: parse output (can raise BTW)
+            split_outp = outp.replace(', ', ' ').split()
+            try:
+                split_outp = [float(_) for _ in split_outp]
+            except Exception as e:
+                this_logger.error("Failed parsing the output: \n===\n %s\n===\n" % outp)
+                return 0
+
+            import numpy as np
+            size = min(len(base_outp), len(split_outp))
+            return sum(np.allclose(a, b) for a, b in zip(split_outp, base_outp)) / len(base_outp)
+            # XXX: make _check return a number out of 100 or a list (then subtasks, sum to 100)
+
+    ex = Ex7(Problem7().solve, logger=root_logger)
 
     if args.only:
         mark_one_path(ex.mark, args.path, root_logger)
