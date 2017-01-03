@@ -238,14 +238,15 @@ class Exercise(object):
                 logger.info("Checking input = %s" % inp)
 
                 outp, err = program.run(logger, inp)
-                base_outp, base_err = self.base_program.run(logger, inp)
-
-                if base_err and not err:
-                    logger.error("base_stderr is %s " % base_err)
-                    raise ValueError("base_err is %s for input %s " % (inp, base_err))
                 if err:
                     logger.error("stderr is \n===\n%s\n===\n" % err)
                     continue
+
+                base_outp, base_err = self.base_program.run(logger, inp)
+                if base_err and not err:
+                    logger.error("base_stderr is %s " % base_err)
+                    raise ValueError("base_err is %s for input %s " % (inp, base_err))
+
 
                 # check/compare outp and base_outp
                 outp = self._parse_output(inp, outp, logger)
