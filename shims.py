@@ -20,6 +20,7 @@ import lab_1
 
 
 class Ex1_7(Exercise):
+    """Shim for Ex1.7: machine epsilon, zero, inf."""
     def __init__(self, *args, **kwds):
         super(Ex1_7, self).__init__(*args, **kwds)
 
@@ -47,6 +48,20 @@ def get_ex1_7(*args, **kwds):
     """Create an instance of Ex7 class with correct solve-func.
     """
     return Ex1_7(lab_1.Problem7().solve, *args, **kwds)
+
+
+
+class ExQ(Exercise):
+    """Quadratic equation."""
+    def __init__(self, *args, **kwds):
+        super(ExQ, self).__init__(*args, **kwds)
+
+def get_ex_q(*args, **kwds):
+    """Create an instance of ExQ class with correct solve-func.
+    """
+    p = lab_1.ProblemQ()
+    return ExQ(p.solve, inputs=p.variants, **kwds)
+
 
 
 ######### a toy example
