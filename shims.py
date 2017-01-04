@@ -14,6 +14,8 @@ Exercise instance needs to accept the solve-func in the constructor.
 """
 from __future__ import division, print_function, absolute_import
 
+import numpy as np
+
 from marking import Exercise
 
 import lab_1
@@ -38,7 +40,6 @@ class Ex1_7(Exercise):
         return split_outp
 
     def _check(self, inp, outp, base_outp, this_logger):
-        import numpy as np
         size = min(len(base_outp), len(outp))
         summ = sum(np.allclose(a, b) for a, b in zip(outp, base_outp))
         # TODO: more careful checks
@@ -78,9 +79,6 @@ class ExQ(Exercise):
         return split_outp
 
     def _check(self, inp, outp, base_outp, this_logger):
-    ###    import pdb; pdb.set_trace()
-
-        import numpy as np
         # FIXME: sort based on... ?
         outp = sorted(outp, key=abs)
         base_outp = sorted(base_outp, key=abs)
@@ -94,7 +92,6 @@ def get_ex_q(*args, **kwds):
     """
     p = lab_1.ProblemQ()
     return ExQ(p.solve, inputs=p.variants, **kwds)
-
 
 
 ######### a toy example
