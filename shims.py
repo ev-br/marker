@@ -56,6 +56,39 @@ class ExQ(Exercise):
     def __init__(self, *args, **kwds):
         super(ExQ, self).__init__(*args, **kwds)
 
+    def _prepare_input(self, inp):
+        return str(inp['b']) + '\n' + str(inp['c'])
+
+    def _parse_output(self, inp, outp, this_logger):
+        # FIXME: copy-paste from Ex1_7: move to the superclass?
+        #
+        # _check expects a list of floats. Extract these floats from `outp`
+        # (which comes from the student).
+        try:
+            outp = outp.rstrip()
+            if outp.startswith('(') and outp.endswith(')'):
+                outp = outp[1:-1]
+            split_outp = outp.replace(', ', ' ').split()
+            split_outp = [complex(_) for _ in split_outp]
+        except Exception as e:
+            mesg = "Failed to parse the output: \n===\n %s\n===\n" % outp
+            mesg += "Exception: %s " % e
+            this_logger.error(mesg)
+            return None
+        return split_outp
+
+    def _check(self, inp, outp, base_outp, this_logger):
+    ###    import pdb; pdb.set_trace()
+
+        import numpy as np
+        # FIXME: sort based on... ?
+        outp = sorted(outp, key=abs)
+        base_outp = sorted(base_outp, key=abs)
+
+        res1 = np.allclose(outp[0], base_outp[0])
+        res2 = np.allclose(np.prod(outp), inp['c'])
+        return 100 * int(res1 and res2)
+
 def get_ex_q(*args, **kwds):
     """Create an instance of ExQ class with correct solve-func.
     """

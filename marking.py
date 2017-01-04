@@ -76,7 +76,6 @@ class Program(object):
         inp_ = str(inp) if inp is not None else ""
         with use_folder(self.workdir):
             try:
-                inp_ = str(inp)
                 p = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
                           universal_newlines=True)
                 output, err = p.communicate(input=inp_, timeout=self.timeout)
@@ -98,10 +97,9 @@ class FakeProgram(object):
 
     def run(self, logger, inp=None):
         logger.info("calling %s with input %s" % (self.func, inp))
-        if inp is not None:
-            res = self.func(inp)
-        else:
-            res = self.func()
+        if inp is None:
+            inp = {}
+        res = self.func(**inp)
         return res, None
 
 
@@ -212,6 +210,10 @@ class Exercise(object):
         """
         return outp
 
+    def _prepare_input(self, inp):
+        """Prepare input for self.run (e.g. command line input)."""
+        return str(inp)
+
     def mark(self, folder, logger, timeout=None):
         logger.info("*** Marking %s ***" % folder)
 
@@ -236,17 +238,19 @@ class Exercise(object):
                     
             for inp, weight in zip(self.inputs, self.weights[1:]):
                 logger.info("Checking input = %s" % inp)
+                inp_ = self._prepare_input(inp)
 
-                outp, err = program.run(logger, inp)
+                outp, err = program.run(logger, inp_)
                 if err:
                     logger.error("stderr is \n===\n%s\n===\n" % err)
                     continue
+
+####                import pdb; pdb.set_trace()
 
                 base_outp, base_err = self.base_program.run(logger, inp)
                 if base_err and not err:
                     logger.error("base_stderr is %s " % base_err)
                     raise ValueError("base_err is %s for input %s " % (inp, base_err))
-
 
                 # check/compare outp and base_outp
                 outp = self._parse_output(inp, outp, logger)
