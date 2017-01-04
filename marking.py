@@ -257,11 +257,15 @@ class Exercise(object):
 
                 # check/compare outp and base_outp
                 outp = self._parse_output(inp, outp, logger)
-                if outp is not None:
-                    result = self._check(inp, outp, base_outp, logger)
-                else:
+                if outp is None:
                     # _parse_output failed.
                     result = 0
+
+                try:                
+                    result = self._check(inp, outp, base_outp, logger)
+                except Exception as e:
+                    result = 0
+                    logger.error("Checking raised:  %s." % e)
 
                 mark += result * weight / 100
                 logger.info("result is %s, mark is %s out of %s." % (result,
