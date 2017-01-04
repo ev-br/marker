@@ -96,7 +96,7 @@ class FakeProgram(object):
         return True
 
     def run(self, logger, inp=None):
-        logger.info("calling %s with input %s" % (self.func, inp))
+        logger.debug("calling %s with input %s" % (self.func, inp))
         if inp is None:
             inp = {}
         try:
@@ -248,8 +248,7 @@ class Exercise(object):
                 if err:
                     logger.error("stderr is \n===\n%s\n===\n" % err)
                     continue
-
-####                import pdb; pdb.set_trace()
+                logger.info("Received output: %s." % outp)
 
                 base_outp, base_err = self.base_program.run(logger, inp)
                 if base_err and not err:
@@ -280,7 +279,8 @@ def mark_one_path(mark_func, ppath, root_logger):
     # first of all, set up the per-student logger
     name = name_from_path(ppath)
     this_logger = setup_logger(logger_name=name,
-                               log_file=os.path.join(ppath, name + '.log'))
+                               log_file=os.path.join(ppath, name + '.log'),
+                               level=logging.INFO)
 
     root_logger.info("Marking.. %s." % ppath)
     try:
