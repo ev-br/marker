@@ -29,14 +29,8 @@ class Ex1_7(Exercise):
     def _parse_output(self, inp, outp, this_logger):
         # _check expects a list of floats. Extract these floats from `outp`
         # (which comes from the student).
-        try:
-            split_outp = outp.replace(', ', ' ').split()
-            split_outp = [float(_) for _ in split_outp]
-        except Exception as e:
-            mesg = "Failed to parse the output: \n===\n %s\n===\n" % outp
-            mesg += "Exception: %s " % e
-            this_logger.error(mesg)
-            return None
+        split_outp = outp.replace(', ', ' ').split()
+        split_outp = [float(_) for _ in split_outp]
         return split_outp
 
     def _check(self, inp, outp, base_outp, this_logger):
@@ -67,17 +61,11 @@ class ExQ(Exercise):
         #
         # _check expects a list of floats. Extract these floats from `outp`
         # (which comes from the student).
-        try:
-            outp = outp.rstrip()
-            if outp.startswith('(') and outp.endswith(')'):
-                outp = outp[1:-1]
-            split_outp = outp.replace(', ', ' ').split()
-            split_outp = [complex(_) for _ in split_outp]
-        except Exception as e:
-            mesg = "Failed to parse the output: \n===\n %s\n===\n" % outp
-            mesg += "Exception: %s " % e
-            this_logger.error(mesg)
-            return None
+        outp = outp.rstrip()
+        if outp.startswith('(') and outp.endswith(')'):
+            outp = outp[1:-1]
+        split_outp = outp.replace(', ', ' ').split()
+        split_outp = [complex(_) for _ in split_outp]
         return split_outp
 
     def _check(self, inp, outp, base_outp, this_logger):
