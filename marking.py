@@ -289,7 +289,7 @@ def mark_one_path(mark_func, ppath, root_logger):
         root_logger.error("Unknown exception: %s." % e)
         mark = 0
     root_logger.info("Done %s; mark = %s." % (ppath, mark))
-    return mark
+    return {"name": name, "mark": mark}
 
 
 if __name__ == "__main__":
@@ -326,7 +326,8 @@ if __name__ == "__main__":
 
     # Mark it
     if args.only:
-        mark_one_path(ex.mark, args.path, root_logger)
+        res = mark_one_path(ex.mark, args.path, root_logger)
+        results = [res]
     else:
         # walk: **Use abspaths, see os.walk docstring's last line**
         # root folder is path
@@ -336,7 +337,16 @@ if __name__ == "__main__":
         #    - student_2
         #    - student_3
         # where each student_# is a directory with an executable. 
+        results = []
         root_path, dirs, fnames = next(os.walk(root_dir))
         for folder in dirs:
             ppath = os.path.join(root_path, folder)
-            mark_one_path(ex.mark, ppath, root_logger)
+            res = mark_one_path(ex.mark, ppath, root_logger)
+            results.append(res)
+
+    # print out the summary
+    maxlen = max(len(_["name"]) for _ in results)
+    fmt = "%"  + str(maxlen) + "s"
+    print("\n\n", "*"*20, " Marks summary:")
+    for entry in results:
+        print(fmt % entry["name"], " : ", round(entry["mark"]))
