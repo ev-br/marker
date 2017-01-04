@@ -171,9 +171,7 @@ class Exercise(object):
             self.base_program = base_program
             self.timeout = base_program.timeout
         else:
-            raise NotImplementedError("what is it?")
-            self.base_program = Program('.', base_program, logger, timeout)  ## FIXME: paths
-            self.timeout = timeout
+            raise NotImplementedError("Never be here.")
 
         logger.info('Compiling the base_program.')
         s = self.base_program.compile(logger)
@@ -224,7 +222,13 @@ class Exercise(object):
         if timeout is None:
             timeout = self.timeout
 
-        submission = Submission(folder)
+        try:
+            submission = Submission(folder)
+        except ValueError:
+            # failed to find an executable
+            logger.error("Failed to find an executable in %s." % folder)
+            return 0
+
         program = Program(submission.folder, submission.fname, logger, timeout)
 
         with use_folder(submission.folder):
