@@ -48,7 +48,7 @@ class Program(object):
         self.workdir = os.path.abspath(folder)
         self.fname = fname
 
-        self.timeout = timeout if timeout else 15
+        self.timeout = timeout if timeout else 5
         self.cmd = None
 
     def compile(self, logger):
