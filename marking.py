@@ -99,7 +99,11 @@ class FakeProgram(object):
         logger.info("calling %s with input %s" % (self.func, inp))
         if inp is None:
             inp = {}
-        res = self.func(**inp)
+        try:
+            res = self.func(**inp)
+        except TypeError:
+            # inp is not a dict, try a positional argument
+            res = self.func(inp)
         return res, None
 
 
