@@ -40,10 +40,12 @@ class Ex1_7(Exercise):
         return split_outp
 
     def _check(self, inp, outp, base_outp, this_logger):
-        size = min(len(base_outp), len(outp))
-        summ = sum(np.allclose(a, b) for a, b in zip(outp, base_outp))
-        # TODO: more careful checks
-        return 100 * summ / len(base_outp)
+        eps, zero, inf = outp
+        eps_ok = (eps > 0) and (1 + eps/2 == 1) and (1 + eps != 1)
+        zero_ok = (zero > 0) and (zero/2 == 0)
+        inf_ok = (inf < float('inf') and inf*4 == float('inf'))
+        return 100 * (int(eps_ok) + int(zero_ok) + int(inf_ok)) / 3
+
 
 def get_ex1_7(*args, **kwds):
     """Create an instance of Ex7 class with correct solve-func.
