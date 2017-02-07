@@ -9,6 +9,9 @@ import contextlib
 import argparse
 import py_compile
 
+from LMSzip import fill_cohort, Student
+
+
 @contextlib.contextmanager
 def use_folder(folder):
     """Step into an existing folder, then step back."""
@@ -288,7 +291,7 @@ class Exercise(object):
         return self.mark(*args, **kwds)
 
 
-def mark_one_path(mark_func, ppath, root_logger):
+def mark_one_path(mark_func, ppath, student, root_logger):
 
     # first of all, set up the per-student logger
     name = name_from_path(ppath)
@@ -303,7 +306,7 @@ def mark_one_path(mark_func, ppath, root_logger):
         root_logger.error("Unknown exception: %s." % e)
         mark = 0
     root_logger.info("Done %s; mark = %s." % (ppath, mark))
-    return {"name": name, "mark": mark}
+    return {"name": student.name, "lms_id": name, "mark": mark}
 
 
 if __name__ == "__main__":
@@ -338,10 +341,22 @@ if __name__ == "__main__":
     factory = getattr(shims, 'get_'+args.checker)
     ex = factory(logger=root_logger)
 
+    # Get the cohort: names, LMS ids etc
+    cohort = fill_cohort()
+
     # Mark it
     if args.only:
-        res = mark_one_path(ex.mark, args.path, root_logger)
+        # assume the folder name is the lms_id
+        lms_id = name_from_path(args.path)
+        try:
+            student = cohort[lms_id]
+        except KeyError:
+            student = Student(lms_id)
+            cohort.update({lms_id: student})
+
+        res = mark_one_path(ex.mark, args.path, student, root_logger)
         results = [res]
+
     else:
         # walk: **Use abspaths, see os.walk docstring's last line**
         # root folder is path
@@ -354,8 +369,16 @@ if __name__ == "__main__":
         results = []
         root_path, dirs, fnames = next(os.walk(root_dir))
         for folder in dirs:
+
+            lms_id = folder   # assume this
+            try:
+                student = cohort[lms_id]
+            except KeyError:
+                student = Student(lms_id)
+                cohort.update({lms_id: student})
+
             ppath = os.path.join(root_path, folder)
-            res = mark_one_path(ex.mark, ppath, root_logger)
+            res = mark_one_path(ex.mark, ppath, student, root_logger)
             results.append(res)
 
     # print out the summary
