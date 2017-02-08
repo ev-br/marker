@@ -9,6 +9,8 @@ import contextlib
 import argparse
 import py_compile
 
+import openpyxl
+
 from LMSzip import fill_cohort, Student
 
 
@@ -380,6 +382,17 @@ if __name__ == "__main__":
             ppath = os.path.join(root_path, folder)
             res = mark_one_path(ex.mark, ppath, student, root_logger)
             results.append(res)
+            student.mark = res["mark"]
+
+        # now save results to Excel, for a good measure
+        xls_path = os.path.join(root_path, "mark_result.xlsx")
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        for row, lms_id in enumerate(cohort):
+            student = cohort[lms_id]
+            ws["A" + str(row+1)] = student.name #["name"]
+            ws["B" + str(row+1)] = student.mark #["mark"]
+        wb.save(xls_path)
 
     # print out the summary
     maxlen = max(len(_["name"]) for _ in results)
