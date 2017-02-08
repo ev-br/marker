@@ -8,6 +8,7 @@ import os
 import contextlib
 import argparse
 import py_compile
+from io import StringIO
 
 import openpyxl
 
@@ -31,7 +32,7 @@ def name_from_path(path):
     return tail.replace(' ', '_')
 
 
-def setup_logger(logger_name, log_file, level=logging.INFO):
+def setup_logger(logger_name, log_file, level=logging.INFO, log_buffer=None):
     # http://stackoverflow.com/questions/17035077/python-logging-to-multiple-log-files-from-different-classes
     l = logging.getLogger(logger_name)
     formatter = logging.Formatter('%(levelname)s: %(asctime)s : %(message)s')
@@ -43,6 +44,9 @@ def setup_logger(logger_name, log_file, level=logging.INFO):
     l.setLevel(level)
     l.addHandler(fileHandler)
     l.addHandler(streamHandler)
+    if log_buffer is not None:
+        captureHandler = logging.StreamHandler(log_buffer)
+        l.addHandler(captureHandler)
     return l
 
 
@@ -297,9 +301,12 @@ def mark_one_path(mark_func, ppath, student, root_logger):
 
     # first of all, set up the per-student logger
     name = name_from_path(ppath)
+
+    log_buf = StringIO()
     this_logger = setup_logger(logger_name=name,
                                log_file=os.path.join(ppath, name + '.log'),
-                               level=logging.INFO)
+                               level=logging.INFO,
+                               log_buffer=log_buf)
 
     root_logger.info("Marking.. %s." % ppath)
     try:
@@ -307,8 +314,14 @@ def mark_one_path(mark_func, ppath, student, root_logger):
     except Exception as e:
         root_logger.error("Unknown exception: %s." % e)
         mark = 0
+
     root_logger.info("Done %s; mark = %s." % (ppath, mark))
-    return {"name": student.name, "lms_id": name, "mark": mark}
+    dct = {"name": student.name,
+           "lms_id": name,
+           "mark": mark,
+           "log": log_buf.getvalue(),}
+    log_buf.close()
+    return dct
 
 
 if __name__ == "__main__":
@@ -357,7 +370,8 @@ if __name__ == "__main__":
             cohort.update({lms_id: student})
 
         res = mark_one_path(ex.mark, args.path, student, root_logger)
-        results = [res]
+        student.mark = res["mark"]
+        results = [student]
 
     else:
         # walk: **Use abspaths, see os.walk docstring's last line**
@@ -377,26 +391,29 @@ if __name__ == "__main__":
                 student = cohort[lms_id]
             except KeyError:
                 student = Student(lms_id)
-                cohort.update({lms_id: student})
 
             ppath = os.path.join(root_path, folder)
             res = mark_one_path(ex.mark, ppath, student, root_logger)
-            results.append(res)
-            student.mark = res["mark"]
+
+            student.mark = round(res["mark"])
+            student.log = res["log"]
+            results.append(student)
+
 
         # now save results to Excel, for a good measure
         xls_path = os.path.join(root_path, "mark_result.xlsx")
         wb = openpyxl.Workbook()
         ws = wb.active
-        for row, lms_id in enumerate(cohort):
-            student = cohort[lms_id]
-            ws["A" + str(row+1)] = student.name #["name"]
-            ws["B" + str(row+1)] = student.mark #["mark"]
+        ws["A1"], ws["B1"], ws["C1"] = "Name", "Mark", "Log"
+        for row, student in enumerate(results):
+            ws["A" + str(row+2)] = student.name
+            ws["B" + str(row+2)] = student.mark
+            ws["C" + str(row+2)] = student.log
         wb.save(xls_path)
 
     # print out the summary
-    maxlen = max(len(_["name"]) for _ in results)
+    maxlen = max(len(_.name) for _ in results)
     fmt = "%"  + str(maxlen) + "s"
     print("\n\n", "*"*20, " Marks summary:")
     for entry in results:
-        print(fmt % entry["name"], " : ", round(entry["mark"]))
+        print(fmt % entry.name, " : ", entry.mark)
